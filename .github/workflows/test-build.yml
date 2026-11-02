@@ -1,0 +1,36 @@
+name: Test build
+
+on:
+  push:
+    branches: [paste-as-file]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-2022
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build
+        shell: cmd
+        run: |
+          call scripts\vcvars.bat || exit /b 1
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release || exit /b 1
+          cmake --build build --parallel 4 --target pulse pulse_ops_test || exit /b 1
+
+      - name: Run ops tests
+        shell: cmd
+        run: build\pulse_ops_test.exe
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pulse-build
+          path: |
+            build/*.exe
+            build/*.dll
+          if-no-files-found: warn

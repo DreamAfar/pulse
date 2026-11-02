@@ -4401,6 +4401,10 @@ BEGIN
     IDS_OP_AUTH_TITLE_DELETE "删除这些项目需要管理员权限"
     IDS_OP_AUTH_NOT_GRANTED_SHORT "没有获得管理员权限。"
     IDS_OP_AUTHORIZATION_ONCE "确认一次即可，本次操作的其余项目不会再问。"
+    IDS_PASTE_AS_TEXT_FILE "粘贴为文本文件"
+    IDS_PASTE_AS_IMAGE_FILE "粘贴为图片文件"
+    IDS_PASTE_AS_FILE_FAILED "无法把剪贴板内容保存为文件"
+    IDS_PASTE_FILE_NAME_PREFIX "剪贴板"
 END
 
 LANGUAGE 0x09, 0x01
@@ -8801,6 +8805,10 @@ BEGIN
     IDS_OP_AUTH_TITLE_DELETE "Deleting these items needs administrator permission"
     IDS_OP_AUTH_NOT_GRANTED_SHORT "Administrator permission wasn't granted."
     IDS_OP_AUTHORIZATION_ONCE "You only need to approve once; the rest of this operation won't ask again."
+    IDS_PASTE_AS_TEXT_FILE "Paste as text file"
+    IDS_PASTE_AS_IMAGE_FILE "Paste as image file"
+    IDS_PASTE_AS_FILE_FAILED "Couldn't save the clipboard content as a file"
+    IDS_PASTE_FILE_NAME_PREFIX "Clipboard"
 END
 
 // Traditional Chinese (Taiwan), generated from the Simplified entries above.

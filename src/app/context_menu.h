@@ -165,6 +165,8 @@ enum MenuCmd : int {
     CmdNetworkClearRecent = 5196,        // ⋯ 清除最近访问
     CmdNetworkHiddenShares = 5197,       // ⋯ 显示隐藏共享 (toggle)
     CmdNetworkDiscoverySettings = 5198,  // ⋯ 局域网发现设置… (Settings → 文件操作)
+    CmdPasteAsTextFile = 5199,           // background menu, when the clipboard has text
+    CmdPasteAsImageFile = 5200,          // background menu, when the clipboard has an image
     CmdShellStaticBase = 6000,
     CmdShellComBase = 8000,
 };

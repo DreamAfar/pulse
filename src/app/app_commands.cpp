@@ -1,3 +1,4 @@
+#include "paste_as_file.h"
 #include "tag_color_commands.h"
 #include "git_ui.h"
 #include "mtime_hint_prefs.h"
@@ -1762,6 +1763,14 @@ void DispatchMenuCommand(AppState& s, int cmd) {
     case app::CmdCut: CollectToTray(s, true); break;
     case app::CmdCopy: CollectToTray(s, false); break;
     case app::CmdPaste: PasteIntoCurrent(s); break;
+    case app::CmdPasteAsTextFile:
+    case app::CmdPasteAsImageFile: {
+        const app::Tab* tab = ActiveTab(s);
+        if (!CanCreateHere(tab)) break;
+        if (cmd == app::CmdPasteAsTextFile) PasteClipboardTextAsFile(s, tab->current_path);
+        else PasteClipboardImageAsFile(s, tab->current_path);
+        break;
+    }
     case app::CmdDelete: DeleteSelected(s, (GetKeyState(VK_SHIFT) & 0x8000) != 0); break;
     case app::CmdRename: RenameSelected(s); break;
     case app::CmdEjectDrive:
@@ -2818,6 +2827,22 @@ void ShowBackgroundContextMenu(AppState& s, POINT screen_pt) {
     bool canPaste = !s.tray.batches().empty() || ClipboardHasFiles();
     const auto recent_changes_path = app::RecentChangesMenuPath(*tab, true);
     auto base_items = app::BuildBackgroundMenu(canPaste, s.ops.CanUndo(), undoLabel);
+    if (CanCreateHere(tab)) {
+        const ops::ClipboardFileKinds kinds = ops::AvailableClipboardFileKinds();
+        auto at = std::find_if(base_items.begin(), base_items.end(),
+                               [](const ui::FluentMenuItem& row) { return row.command == app::CmdPaste; });
+        if (at != base_items.end()) {
+            ++at;
+            if (kinds.image) {
+                at = base_items.insert(at, VerbRow(app::CmdPasteAsImageFile,
+                    l10n::Get(l10n::StringId::PasteAsImageFile).c_str(), L"\xEB9F"));
+            }
+            if (kinds.text) {
+                base_items.insert(at, VerbRow(app::CmdPasteAsTextFile,
+                    l10n::Get(l10n::StringId::PasteAsTextFile).c_str(), L"\xE8A5"));
+            }
+        }
+    }
     app::AppendRecentChangesCommand(base_items, recent_changes_path);
     app::AppendBackgroundViewCommands(base_items, view_options);
     ApplyWorkspacePinLabel(base_items, s);

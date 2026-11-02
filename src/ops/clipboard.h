@@ -26,6 +26,25 @@ bool WriteClipboard(const std::vector<std::wstring>& paths, bool cut);
 // Writes plain text (Ctrl+Shift+C "copy path"). UI thread only.
 bool WriteClipboardText(const std::wstring& text);
 
+// What 粘贴为文件 can make from the clipboard. Both stay false while it holds
+// files: those paste as themselves.
+struct ClipboardFileKinds {
+    bool text = false;
+    bool image = false;
+};
+ClipboardFileKinds AvailableClipboardFileKinds();
+
+// UTF-8 without a BOM. False when there is no text, or it is empty. UI thread.
+bool ReadClipboardTextUtf8(std::vector<uint8_t>& out);
+
+// The app's own PNG when it published one (browsers do; it keeps transparency),
+// otherwise the DIB (screenshots), which still needs EncodeDibAsPng. UI thread.
+struct ClipboardImage {
+    std::vector<uint8_t> data;
+    bool is_dib = false;
+};
+bool ReadClipboardImage(ClipboardImage& out);
+
 // Reads an Explorer copy/cut (CF_HDROP). Returns false if no files present.
 bool ReadClipboard(ClipboardData& out);
 

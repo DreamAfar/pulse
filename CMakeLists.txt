@@ -724,8 +724,9 @@ add_executable(pulse_ops_test
     src/ops/ops_manager.cpp
     src/ops/file_lock_owner.cpp
     src/ops/clipboard.cpp
+    src/ops/clipboard_image.cpp
     src/ipc/shell_client.cpp)
-target_link_libraries(pulse_ops_test PRIVATE ole32 shell32 uuid bcrypt pulse_localization)
+target_link_libraries(pulse_ops_test PRIVATE ole32 shell32 uuid bcrypt windowscodecs pulse_localization)
 # Copy / delete throughput through OpsManager (synthetic files, cleaned up).
 add_executable(pulse_ops_bench
     src/bench/ops_bench_main.cpp

@@ -8,6 +8,8 @@
 #include "../ops/transfer_rate_estimator.h"
 #include "../app/update_shutdown.h"
 #include "../ops/clipboard.h"
+#include "../ops/clipboard_image.h"
+#include <cstring>
 #include "../ipc/shell_client.h"
 #include "../common/localization.h"
 #include "../common/current_user_security.h"
@@ -1605,6 +1607,34 @@ int wmain(int argc, wchar_t** argv) {
               L"clipboard: COPY|MOVE pastes as a copy");
         Check(!ops::PreferredEffectIsCut(DROPEFFECT_COPY), L"clipboard: COPY is not a cut");
         Check(!ops::PreferredEffectIsCut(0), L"clipboard: no effect is not a cut");
+
+        // 粘贴为文件: text comes out as UTF-8, and only when no files are there.
+        Check(ops::WriteClipboardText(L"a\u4E2D"), L"paste as file: write text");
+        std::vector<uint8_t> utf8;
+        Check(ops::AvailableClipboardFileKinds().text, L"paste as file: text is offered");
+        Check(ops::ReadClipboardTextUtf8(utf8) &&
+              utf8 == std::vector<uint8_t>{'a', 0xE4, 0xB8, 0xAD}, L"paste as file: text is UTF-8 without a BOM");
+        Check(ops::WriteClipboard({ srcDir + L"\\d.txt" }, false), L"paste as file: write files");
+        const ops::ClipboardFileKinds file_kinds = ops::AvailableClipboardFileKinds();
+        Check(!file_kinds.text && !file_kinds.image, L"paste as file: files are not offered as content");
+
+        // A 2x2 bottom-up 24-bit DIB encodes to PNG; malformed ones are refused.
+        std::vector<uint8_t> dib(sizeof(BITMAPINFOHEADER) + 16, 0x7F);
+        BITMAPINFOHEADER dib_header{};
+        dib_header.biSize = sizeof(dib_header);
+        dib_header.biWidth = 2;
+        dib_header.biHeight = 2;
+        dib_header.biPlanes = 1;
+        dib_header.biBitCount = 24;
+        dib_header.biCompression = BI_RGB;
+        std::memcpy(dib.data(), &dib_header, sizeof(dib_header));
+        std::vector<uint8_t> png;
+        Check(ops::EncodeDibAsPng(dib, png) && png.size() > 8 && png[0] == 0x89 && png[1] == 'P',
+              L"paste as file: DIB encodes to PNG");
+        std::vector<uint8_t> short_dib(dib.begin(), dib.end() - 1);
+        Check(!ops::EncodeDibAsPng(short_dib, png) && png.empty(), L"paste as file: truncated DIB is refused");
+        std::vector<uint8_t> header_only(dib.begin(), dib.begin() + 8);
+        Check(!ops::EncodeDibAsPng(header_only, png), L"paste as file: short header is refused");
     }
 
     // --- 12. CopyFile2 bytes, pause/resume, cancel and atomic replacement ----

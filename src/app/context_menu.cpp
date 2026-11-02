@@ -135,7 +135,9 @@ BuiltinMenuItem BuiltinItemForCommand(int command) {
     case CmdRefresh: return BuiltinMenuItem::Refresh;
     case CmdNewFolder: return BuiltinMenuItem::NewFolder;
     case CmdNewTextFile: return BuiltinMenuItem::NewTextFile;
-    case CmdPaste: return BuiltinMenuItem::Paste;
+    case CmdPaste:
+    case CmdPasteAsTextFile:
+    case CmdPasteAsImageFile: return BuiltinMenuItem::Paste;
     case CmdProperties: return BuiltinMenuItem::Properties;
     case CmdFolderProperties: return BuiltinMenuItem::FolderProperties;
     default: return BuiltinMenuItem::Count;

@@ -7,6 +7,7 @@
 #include <shlobj.h>
 #include <shobjidl.h>
 #include <cstring>
+#include <cwchar>
 
 namespace pulse::ops {
 
@@ -290,6 +291,64 @@ bool ReadClipboardShellItems(std::vector<std::wstring>& shell_ids, bool& cut) {
     if (!shell_ids.empty()) cut = ReadPreferredCut(data);
     data->Release();
     return !shell_ids.empty();
+}
+
+ClipboardFileKinds AvailableClipboardFileKinds() {
+    ClipboardFileKinds kinds;
+    if (ClipboardHasPasteableFiles()) return kinds;
+    kinds.text = IsClipboardFormatAvailable(CF_UNICODETEXT) != FALSE;
+    // Windows synthesizes CF_DIB from CF_DIBV5 and CF_BITMAP.
+    kinds.image = IsClipboardFormatAvailable(CF_DIB) ||
+                  IsClipboardFormatAvailable(RegisterClipboardFormatW(L"PNG"));
+    return kinds;
+}
+
+bool ReadClipboardTextUtf8(std::vector<uint8_t>& out) {
+    out.clear();
+    if (!IsClipboardFormatAvailable(CF_UNICODETEXT) || !OpenClipboardWithRetry(nullptr)) return false;
+    if (HANDLE h = GetClipboardData(CF_UNICODETEXT)) {
+        const size_t capacity = GlobalSize(h) / sizeof(wchar_t);
+        if (const auto* text = static_cast<const wchar_t*>(GlobalLock(h))) {
+            const size_t length = wcsnlen(text, capacity);
+            if (length > 0 && length <= 0x7FFFFFFF) {
+                const int count = static_cast<int>(length);
+                const int bytes = WideCharToMultiByte(CP_UTF8, 0, text, count, nullptr, 0, nullptr, nullptr);
+                if (bytes > 0) {
+                    out.resize(static_cast<size_t>(bytes));
+                    if (WideCharToMultiByte(CP_UTF8, 0, text, count, reinterpret_cast<char*>(out.data()),
+                                            bytes, nullptr, nullptr) != bytes)
+                        out.clear();
+                }
+            }
+            GlobalUnlock(h);
+        }
+    }
+    CloseClipboard();
+    return !out.empty();
+}
+
+bool ReadClipboardImage(ClipboardImage& out) {
+    out = {};
+    if (!OpenClipboardWithRetry(nullptr)) return false;
+    const auto copy_format = [&out](UINT format) {
+        out.data.clear();
+        HANDLE h = IsClipboardFormatAvailable(format) ? GetClipboardData(format) : nullptr;
+        if (!h) return;
+        const size_t size = GlobalSize(h);
+        if (const auto* bytes = static_cast<const uint8_t*>(GlobalLock(h))) {
+            out.data.assign(bytes, bytes + size);
+            GlobalUnlock(h);
+        }
+    };
+    static constexpr uint8_t kPngSignature[8] = {0x89, 'P', 'N', 'G', 0x0D, 0x0A, 0x1A, 0x0A};
+    copy_format(RegisterClipboardFormatW(L"PNG"));
+    if (out.data.size() <= sizeof(kPngSignature) ||
+        std::memcmp(out.data.data(), kPngSignature, sizeof(kPngSignature)) != 0) {
+        copy_format(CF_DIB);
+        out.is_dib = !out.data.empty();
+    }
+    CloseClipboard();
+    return !out.data.empty();
 }
 
 bool CompleteCutClipboard(uint32_t sequence, const std::vector<std::wstring>& expected_paths) {

@@ -274,6 +274,8 @@ inline constexpr MenuCmdLink kMenuCmdLinks[] = {
     {CmdCut, {"file.cut"}},
     {CmdCopy, {"file.copy"}},
     {CmdPaste, {"file.paste"}},
+    {CmdPasteAsTextFile, {"", "right-click only: writes what the user just copied, never run for them"}},
+    {CmdPasteAsImageFile, {"", "right-click only: writes what the user just copied, never run for them"}},
     {CmdDelete, {"file.recycle"}},
     {CmdRename, {"file.rename"}},
     {CmdProperties, {"file.properties"}},

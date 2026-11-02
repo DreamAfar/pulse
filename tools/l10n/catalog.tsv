@@ -4426,3 +4426,7 @@ OpAuthTitleMove	IDS_OP_AUTH_TITLE_MOVE	5626	移动到这里需要管理员权限
 OpAuthTitleDelete	IDS_OP_AUTH_TITLE_DELETE	5627	删除这些项目需要管理员权限	Deleting these items needs administrator permission	刪除這些項目需要系統管理員權限
 OpAuthNotGrantedShort	IDS_OP_AUTH_NOT_GRANTED_SHORT	5628	没有获得管理员权限。	Administrator permission wasn't granted.	沒有取得系統管理員權限。
 OpAuthorizationOnce	IDS_OP_AUTHORIZATION_ONCE	5629	确认一次即可，本次操作的其余项目不会再问。	You only need to approve once; the rest of this operation won't ask again.	確認一次即可，本次操作的其餘項目不會再詢問。
+PasteAsTextFile	IDS_PASTE_AS_TEXT_FILE	5630	粘贴为文本文件	Paste as text file	
+PasteAsImageFile	IDS_PASTE_AS_IMAGE_FILE	5631	粘贴为图片文件	Paste as image file	
+PasteAsFileFailed	IDS_PASTE_AS_FILE_FAILED	5632	无法把剪贴板内容保存为文件	Couldn't save the clipboard content as a file	
+PasteFileNamePrefix	IDS_PASTE_FILE_NAME_PREFIX	5633	剪贴板	Clipboard	

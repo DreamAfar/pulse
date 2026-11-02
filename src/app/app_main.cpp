@@ -1,3 +1,4 @@
+#include "paste_as_file.h"
 #include "app_diagnostics.h"
 #include "partial_redraw.h"
 #include "git_ui.h"
@@ -2077,6 +2078,12 @@ LRESULT CALLBACK WndProcImpl(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) 
     case WM_GIT_RESULT:
         if (s) ReceiveGitResult(*s, lParam);
         return 0;
+    case WM_PASTE_IMAGE_DONE: {
+        std::unique_ptr<PastedImageResult> result(reinterpret_cast<PastedImageResult*>(lParam));
+        if (s && result) ApplyPastedImage(*s, *result);
+        return 0;
+    }
+
     case WM_CLOUD_PIN_DONE:
         // Toast for 始终保留在此设备上 / 释放空间 (app_commands.cpp RunCloudPin).
         if (s && s->hwnd) {

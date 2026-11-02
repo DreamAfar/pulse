@@ -88,6 +88,7 @@ constexpr UINT WM_COMMAND_PALETTE = WM_APP + 116;  // the address editor got ">"
 constexpr UINT WM_RECYCLE_REFUSED = WM_APP + 117;  // window: a recycle left items the bin would not keep (AppState::recycleRefused)
 constexpr UINT WM_DOUBLE_CTRL = WM_APP + 118;  // two Ctrl taps anywhere: toggle the quick search popup
 constexpr UINT WM_DIALOG_JUMP_CONTEXT = WM_APP + 119;  // the dialog jump bar wants the open folders
+constexpr UINT WM_PASTE_IMAGE_DONE = WM_APP + 122;  // window: lParam PastedImageResult* (paste_as_file.h)
 constexpr UINT WM_DEVICE_WATCH_READY = WM_APP + 120;  // worker: wParam ticket, lParam PIDLIST_ABSOLUTE of the phone folder to watch (app_runtime.h)
 constexpr UINT WM_DEVICE_FOLDER_CHANGED = WM_APP + 121;  // SHChangeNotify on the watched phone folder (SHCNRF_NewDelivery)
 
