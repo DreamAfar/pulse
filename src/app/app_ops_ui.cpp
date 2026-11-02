@@ -1,6 +1,7 @@
 // app_ops_ui.cpp — extracted from app_main.cpp.
 #include "app_internal.h"
 #include "app_messages.h"
+#include "paste_as_file.h"
 #include "../ui/lumatext_renderer.h"
 #include "../ui/fluent_menu.h"
 #include "../ui/drag_drop.h"
@@ -410,6 +411,8 @@ void PasteIntoCurrent(AppState& s) {
         ArmArrivalSelection(s, nullptr, 0, 8000);
         if (!s.ops.RunShellVerb({ClipboardPath(tab->current_path)}, L"paste", true, s.hwnd))
             ops::PasteShellClipboard(tab->current_path);
+    } else {
+        PasteClipboardContentAsFile(s, tab->current_path);
     }
 }
 

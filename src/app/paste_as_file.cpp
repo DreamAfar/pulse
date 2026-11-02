@@ -85,6 +85,18 @@ void PasteClipboardImageAsFile(AppState& s, const std::wstring& dir) {
     }).detach();
 }
 
+void PasteClipboardContentAsFile(AppState& s, const std::wstring& dir) {
+    const app::Tab* tab = ActiveTab(s);
+    if (!tab) return;
+    const ops::ClipboardFileKinds kinds = ops::AvailableClipboardFileKinds();
+    std::vector<uint8_t> text;
+    if (kinds.text && ops::ReadClipboardTextUtf8(text)) {
+        CreatePastedFile(s, dir, tab->view_generation, L".txt", std::move(text));
+    } else if (kinds.image) {
+        PasteClipboardImageAsFile(s, dir);
+    }
+}
+
 void ApplyPastedImage(AppState& s, PastedImageResult& result) {
     if (!result.ok) {
         ReportFailure(s);

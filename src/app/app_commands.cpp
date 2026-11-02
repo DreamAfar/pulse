@@ -2824,11 +2824,13 @@ void ShowBackgroundContextMenu(AppState& s, POINT screen_pt) {
     const bool seeded = s.context_menu.com_predicted();
 
     std::wstring undoLabel = s.ops.UndoLabel();
-    bool canPaste = !s.tray.batches().empty() || ClipboardHasFiles();
+    const ops::ClipboardFileKinds clipboard_kinds = ops::AvailableClipboardFileKinds();
+    bool canPaste = !s.tray.batches().empty() || ClipboardHasFiles() ||
+        (CanCreateHere(tab) && (clipboard_kinds.text || clipboard_kinds.image));
     const auto recent_changes_path = app::RecentChangesMenuPath(*tab, true);
     auto base_items = app::BuildBackgroundMenu(canPaste, s.ops.CanUndo(), undoLabel);
     if (CanCreateHere(tab)) {
-        const ops::ClipboardFileKinds kinds = ops::AvailableClipboardFileKinds();
+        const ops::ClipboardFileKinds& kinds = clipboard_kinds;
         auto at = std::find_if(base_items.begin(), base_items.end(),
                                [](const ui::FluentMenuItem& row) { return row.command == app::CmdPaste; });
         if (at != base_items.end()) {
@@ -4533,8 +4535,12 @@ std::vector<ui::SelectionChipAction> ToolbarPinActions(AppState& s) {
             break;
         }
         case app::CmdPaste:
-            action.enabled = CanCreateHere(tab) ? (!s.tray.batches().empty() || ClipboardHasFiles())
-                                                : CanPasteHere(tab) && ClipboardHasFiles();
+            if (CanCreateHere(tab)) {
+                const ops::ClipboardFileKinds kinds = ops::AvailableClipboardFileKinds();
+                action.enabled = !s.tray.batches().empty() || ClipboardHasFiles() || kinds.text || kinds.image;
+            } else {
+                action.enabled = CanPasteHere(tab) && ClipboardHasFiles();
+            }
             break;
         case app::CmdSelectAll: case app::CmdInvertSelection: case app::CmdSelectWildcard:
             action.enabled = tab->snapshot && tab->EntryCount() > 0;
