@@ -24,7 +24,9 @@ jobs:
 
       - name: Run ops tests
         shell: cmd
-        run: build\pulse_ops_test.exe
+        run: |
+          mkdir bench_data
+          build\pulse_ops_test.exe
 
       - uses: actions/upload-artifact@v4
         if: always()
