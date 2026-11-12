@@ -1,0 +1,15 @@
+{
+  "name": "pulse-image-convert",
+  "version": "0.1.0",
+  "dependencies": [
+    "libwebp",
+    "libjxl",
+    {
+      "name": "libheif",
+      "default-features": false,
+      "features": ["libde265", "dav1d"]
+    },
+    "stb"
+  ],
+  "builtin-baseline": "b58529e33332fbb6dfe20317a82009b78ceeab36"
+}

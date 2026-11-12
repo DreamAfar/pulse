@@ -1,0 +1,124 @@
+name: Image convert extension
+
+on:
+  push:
+    branches: [image-convert]
+    paths:
+      - 'extensions/image-convert/**'
+      - 'sdk/native/include/**'
+      - '.github/workflows/image-convert.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  VCPKG_COMMIT: b58529e33332fbb6dfe20317a82009b78ceeab36
+
+jobs:
+  plugin:
+    runs-on: windows-2022
+    timeout-minutes: 120
+    env:
+      VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}\vcpkg-cache
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Restore vcpkg binary cache
+        uses: actions/cache@v4
+        with:
+          path: vcpkg-cache
+          key: vcpkg-${{ env.VCPKG_COMMIT }}-${{ hashFiles('extensions/image-convert/vcpkg.json') }}
+          restore-keys: vcpkg-${{ env.VCPKG_COMMIT }}-
+
+      - name: Set up vcpkg
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force vcpkg-cache | Out-Null
+          git clone https://github.com/microsoft/vcpkg "$env:RUNNER_TEMP\vcpkg"
+          git -C "$env:RUNNER_TEMP\vcpkg" checkout $env:VCPKG_COMMIT
+          & "$env:RUNNER_TEMP\vcpkg\bootstrap-vcpkg.bat" -disableMetrics
+
+      - name: Build
+        shell: cmd
+        run: |
+          call scripts\vcvars.bat || exit /b 1
+          cmake -S extensions\image-convert -B build-image-convert -G Ninja -DCMAKE_BUILD_TYPE=Release ^
+            -DCMAKE_TOOLCHAIN_FILE=%RUNNER_TEMP%\vcpkg\scripts\buildsystems\vcpkg.cmake ^
+            -DVCPKG_TARGET_TRIPLET=x64-windows-static || exit /b 1
+          cmake --build build-image-convert || exit /b 1
+
+      - name: Upload vcpkg logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vcpkg-logs
+          path: |
+            ${{ runner.temp }}/vcpkg/buildtrees/**/*.log
+            build-image-convert/vcpkg-manifest-install.log
+          if-no-files-found: ignore
+
+      - name: Test conversions
+        shell: cmd
+        run: build-image-convert\image_convert_test.exe extensions\image-convert\test\fixtures "%RUNNER_TEMP%\image-convert-test"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: image-convert-dll
+          path: build-image-convert/image_convert.dll
+          if-no-files-found: error
+
+  host:
+    # Only to validate the generated manifest: pulse_ext.py asks the host.
+    runs-on: windows-2022
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Pulse
+        shell: cmd
+        run: |
+          call scripts\vcvars.bat || exit /b 1
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release || exit /b 1
+          cmake --build build --parallel 4 --target pulse || exit /b 1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pulse-host
+          path: |
+            build/*.exe
+            build/*.dll
+          if-no-files-found: error
+
+  package:
+    needs: [plugin, host]
+    runs-on: windows-2022
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: image-convert-dll
+          path: out/package
+      - uses: actions/download-artifact@v4
+        with:
+          name: pulse-host
+          path: out/host
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Generate manifest, pack and verify
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $ext = 'tools/extensions/pulse_ext.py'
+          $pulse = 'out/host/pulse.exe'
+          python $ext --pulse $pulse --json native-manifest extensions/image-convert/manifest.json --library out/package/image_convert.dll --output out/package/manifest.json
+          if ($LASTEXITCODE) { throw 'native-manifest failed' }
+          python $ext --pulse $pulse --json pack out/package/manifest.json --output out/image-convert.pulse-ext
+          if ($LASTEXITCODE) { throw 'pack failed' }
+          python $ext --pulse $pulse --json verify out/image-convert.pulse-ext
+          if ($LASTEXITCODE) { throw 'verify failed' }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: image-convert-package
+          path: out/image-convert.pulse-ext
+          if-no-files-found: error
