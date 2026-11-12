@@ -25,8 +25,9 @@ std::vector<uint8_t> ReadAll(const fs::path& path) {
 }
 
 std::string Name(Format format) {
-    const wchar_t* ext = Extension(format);
-    return std::string(ext, ext + wcslen(ext));
+    std::string name;
+    for (const wchar_t* ext = Extension(format); *ext; ++ext) name.push_back(static_cast<char>(*ext));  // ASCII
+    return name;
 }
 
 struct Expected { std::string name; uint32_t width, height; bool alpha; };
@@ -103,8 +104,8 @@ int main(int argc, char** argv) {
                 options.quality = 85;
                 options.jxl_lossless = variant == 0;
                 const std::string label = e.name + " -> " + Name(options.format) + (f == 4 ? (variant ? " lossy" : " lossless") : "");
-                const fs::path output = scratch / (fs::path(e.name).stem().string() + "_" + std::to_string(f) + std::to_string(variant) +
-                                                   Name(options.format));
+                // The whole source name: anim.gif and anim.webp must not share an output.
+                const fs::path output = scratch / (e.name + "_" + std::to_string(f) + std::to_string(variant) + Name(options.format));
                 const auto result = Convert((fixtures / e.name).wstring(), output.wstring(), options, {});
                 Check(result.ok, label + (result.ok ? "" : " (" + result.error + ")"));
                 if (!result.ok) continue;

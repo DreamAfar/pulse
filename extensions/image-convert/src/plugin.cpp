@@ -201,19 +201,19 @@ struct Plugin {
             {sizeof(PulseDialogButton), PULSE_DIALOG_BUTTON_PRIMARY, View("convert"), View("转换")},
             {sizeof(PulseDialogButton), PULSE_DIALOG_BUTTON_STANDARD, View("cancel"), View("取消")},
         }};
-        PulseDialogRequest request{};
-        request.size = sizeof(request);
-        request.width = 460;
-        request.height = 330;
-        request.default_button = 0;
-        request.cancel_button = 1;
-        request.button_count = static_cast<uint32_t>(buttons.size());
-        request.title = View("转换图片格式");
-        request.message = View(message);
-        request.buttons = buttons.data();
-        request.model = &tree.Build();
+        PulseDialogRequest dialog_request{};
+        dialog_request.size = sizeof(dialog_request);
+        dialog_request.width = 460;
+        dialog_request.height = 330;
+        dialog_request.default_button = 0;
+        dialog_request.cancel_button = 1;
+        dialog_request.button_count = static_cast<uint32_t>(buttons.size());
+        dialog_request.title = View("转换图片格式");
+        dialog_request.message = View(message);
+        dialog_request.buttons = buttons.data();
+        dialog_request.model = &tree.Build();
         pending = std::move(files);
-        if (dialogs.show(dialogs.context, &request, Changed, Closed, this, &dialog) != PULSE_OK) {
+        if (dialogs.show(dialogs.context, &dialog_request, Changed, Closed, this, &dialog) != PULSE_OK) {
             dialog = 0;
             pending.clear();
         }
